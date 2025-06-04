@@ -1,4 +1,4 @@
-#include <stdio.h>
+            #include <stdio.h>
 #include <string.h>
 
 #define MAX_ROOMS 100
@@ -6,20 +6,18 @@
 struct Room {
     int roomNo;
     char type[20];
-    int isAvailable; // 1 means available, 0 means booked
+    int isAvailable;
     char guestName[50];
-    char checkInDate[20];
-    char checkOutDate[20];
     int daysStayed;
     int serviceCharges;
     int cleaningCharges;
-    int foodCharges;   // New field for food charges
+    int foodCharges;
 };
 
 struct Room rooms[MAX_ROOMS];
 int roomCount = 0;
 
-// Initialize some rooms (for demo)
+// Initialize rooms
 void initRooms() {
     roomCount = 5;
     for (int i = 0; i < roomCount; i++) {
@@ -33,8 +31,6 @@ void initRooms() {
         rooms[i].cleaningCharges = 0;
         rooms[i].foodCharges = 0;
         strcpy(rooms[i].guestName, "");
-        strcpy(rooms[i].checkInDate, "");
-        strcpy(rooms[i].checkOutDate, "");
         rooms[i].daysStayed = 0;
     }
 }
@@ -42,217 +38,219 @@ void initRooms() {
 // Book a room
 void bookRoom() {
     int roomNo;
-    char guest[50], checkIn[20], checkOut[20];
+    char guest[50];
     int days;
 
-    printf("Enter room number to book: ");
+    printf("\n========== Available Rooms ==========\n");
+    printf("Room\tType\tPrice per Day\n");
+    for (int i = 0; i < roomCount; i++) {
+        if (rooms[i].isAvailable) {
+            int price = 0;
+            if (strcmp(rooms[i].type, "Single") == 0) price = 1000;
+            else if (strcmp(rooms[i].type, "Double") == 0) price = 1500;
+            else price = 2500;
+            printf("%d\t%s\tRs.%d\n", rooms[i].roomNo, rooms[i].type, price);
+        }
+    }
+
+    printf("\nEnter room number to book: ");
     scanf("%d", &roomNo);
 
-    // Find room
     for (int i = 0; i < roomCount; i++) {
         if (rooms[i].roomNo == roomNo) {
             if (!rooms[i].isAvailable) {
-                printf("Room %d is already booked.\n", roomNo);
+                printf("⚠️  Room %d is already booked.\n", roomNo);
                 return;
             }
+
+            getchar();
             printf("Enter guest name: ");
-            getchar(); // to clear newline
             fgets(guest, sizeof(guest), stdin);
-            guest[strcspn(guest, "\n")] = 0;  // Remove newline
-
-            printf("Enter check-in date (dd/mm/yyyy): ");
-            fgets(checkIn, sizeof(checkIn), stdin);
-            checkIn[strcspn(checkIn, "\n")] = 0;
-
-            printf("Enter check-out date (dd/mm/yyyy): ");
-            fgets(checkOut, sizeof(checkOut), stdin);
-            checkOut[strcspn(checkOut, "\n")] = 0;
+            guest[strcspn(guest, "\n")] = 0;
 
             printf("Enter number of days: ");
             scanf("%d", &days);
 
             rooms[i].isAvailable = 0;
             strcpy(rooms[i].guestName, guest);
-            strcpy(rooms[i].checkInDate, checkIn);
-            strcpy(rooms[i].checkOutDate, checkOut);
             rooms[i].daysStayed = days;
             rooms[i].serviceCharges = 0;
             rooms[i].cleaningCharges = 0;
             rooms[i].foodCharges = 0;
 
-            printf("Room %d successfully booked for %s.\n", roomNo, guest);
+            printf("\n✅ Room %d successfully booked for %s.\n", roomNo, guest);
             return;
         }
     }
-    printf("Room number %d not found.\n", roomNo);
+    printf("❌ Error: Room number %d not found.\n", roomNo);
 }
 
-// Check out and free room
+// Check-out guest
 void checkOut() {
     int roomNo;
+    printf("\n========== Check Out Guest ==========\n");
     printf("Enter room number to check out: ");
     scanf("%d", &roomNo);
 
     for (int i = 0; i < roomCount; i++) {
         if (rooms[i].roomNo == roomNo) {
             if (rooms[i].isAvailable) {
-                printf("Room %d is already available.\n", roomNo);
+                printf("⚠️  Room %d is already available.\n", roomNo);
                 return;
             }
+
             rooms[i].isAvailable = 1;
             strcpy(rooms[i].guestName, "");
-            strcpy(rooms[i].checkInDate, "");
-            strcpy(rooms[i].checkOutDate, "");
             rooms[i].daysStayed = 0;
             rooms[i].serviceCharges = 0;
             rooms[i].cleaningCharges = 0;
             rooms[i].foodCharges = 0;
-            printf("Room %d is now available.\n", roomNo);
+            printf("✅ Guest has checked out. Room %d is now available.\n", roomNo);
             return;
         }
     }
-    printf("Room number %d not found.\n", roomNo);
+    printf("❌ Error: Room number %d not found.\n", roomNo);
 }
 
-// Kitchen department - add food charges
+// Kitchen department
 void kitchenMenu() {
     int choice, roomNo;
     do {
-        printf("\n--- Kitchen Department ---\n");
-        printf("1. View Food Menu\n2. Order Food\n3. Food Payment Info\n4. Back to Main Menu\nEnter your choice: ");
+        printf("\n========== Kitchen Department ==========\n");
+        printf("1. View Food Menu\n2. Order Food\n3. Food Info\n4. Back\nEnter choice: ");
         scanf("%d", &choice);
 
         switch (choice) {
             case 1:
-                printf("Menu: Pizza - Rs.250, Burger - Rs.150, Thali - Rs.200\n");
+                printf("\n🍽️  Menu:\n1. Pizza - Rs.250\n2. Burger - Rs.150\n3. Thali - Rs.200\n");
                 break;
             case 2: {
-                printf("Enter room number for food order: ");
+                printf("Enter room number: ");
                 scanf("%d", &roomNo);
-
                 int found = 0;
+
                 for (int i = 0; i < roomCount; i++) {
                     if (rooms[i].roomNo == roomNo && !rooms[i].isAvailable) {
                         found = 1;
-                        int foodChoice, quantity;
-                        printf("Select Food:\n1. Pizza (Rs.250)\n2. Burger (Rs.150)\n3. Thali (Rs.200)\nEnter choice: ");
+                        int foodChoice, quantity, cost = 0;
+                        printf("Select item (1.Pizza 2.Burger 3.Thali): ");
                         scanf("%d", &foodChoice);
                         printf("Enter quantity: ");
                         scanf("%d", &quantity);
 
-                        int cost = 0;
-                        switch (foodChoice) {
-                            case 1: cost = 250 * quantity; break;
-                            case 2: cost = 150 * quantity; break;
-                            case 3: cost = 200 * quantity; break;
-                            default:
-                                printf("Invalid food choice.\n");
-                                continue;
+                        if (foodChoice == 1) cost = 250 * quantity;
+                        else if (foodChoice == 2) cost = 150 * quantity;
+                        else if (foodChoice == 3) cost = 200 * quantity;
+                        else {
+                            printf("❌ Invalid food choice.\n");
+                            break;
                         }
 
                         rooms[i].foodCharges += cost;
-                        printf("Food order placed. Rs.%d added to room %d bill.\n", cost, roomNo);
+                        printf("✅ Order placed. Rs.%d added to room %d.\n", cost, roomNo);
                         break;
                     }
                 }
-                if (!found) {
-                    printf("Invalid or unbooked room number.\n");
-                }
+                if (!found)
+                    printf("❌ Invalid or unbooked room number.\n");
                 break;
             }
             case 3:
-                printf("Food payment is included in the total billing at Receptionist Department.\n");
+                printf("ℹ️  Food charges are included in the final billing.\n");
                 break;
             case 4:
                 return;
             default:
-                printf("Invalid choice.\n");
+                printf("❌ Invalid choice. Try again.\n");
         }
     } while (choice != 4);
 }
 
-// Service department charges
+// Add service charge
 void serviceMenu() {
     int roomNo, charge;
-    printf("Enter room number to add service charges: ");
+    printf("\n========== Service Department ==========\n");
+    printf("Enter room number: ");
     scanf("%d", &roomNo);
 
     for (int i = 0; i < roomCount; i++) {
         if (rooms[i].roomNo == roomNo) {
             if (rooms[i].isAvailable) {
-                printf("Room %d is not booked currently. Cannot add service charges.\n", roomNo);
+                printf("⚠️  Room not booked. Cannot add charges.\n");
                 return;
             }
-            printf("Enter service charge amount: ");
+            printf("Enter service charge: ");
             scanf("%d", &charge);
             rooms[i].serviceCharges += charge;
-            printf("Service charges of Rs.%d added to room %d.\n", charge, roomNo);
+            printf("✅ Rs.%d added to room %d.\n", charge, roomNo);
             return;
         }
     }
-    printf("Invalid room number.\n");
+    printf("❌ Invalid room number.\n");
 }
 
-// Cleaning department charges
+// Add cleaning charge
 void cleanerMenu() {
     int roomNo, charge;
-    printf("Enter room number to add cleaning charges: ");
+    printf("\n========== Cleaning Department ==========\n");
+    printf("Enter room number: ");
     scanf("%d", &roomNo);
 
     for (int i = 0; i < roomCount; i++) {
         if (rooms[i].roomNo == roomNo) {
             if (rooms[i].isAvailable) {
-                printf("Room %d is not booked currently. Cannot add cleaning charges.\n", roomNo);
+                printf("⚠️  Room not booked. Cannot add charges.\n");
                 return;
             }
-            printf("Enter cleaning charge amount: ");
+            printf("Enter cleaning charge: ");
             scanf("%d", &charge);
             rooms[i].cleaningCharges += charge;
-            printf("Cleaning charges of Rs.%d added to room %d.\n", charge, roomNo);
+            printf("✅ Rs.%d cleaning charge added to room %d.\n", charge, roomNo);
             return;
         }
     }
-    printf("Invalid room number.\n");
+    printf("❌ Invalid room number.\n");
 }
 
-// Receptionist department - billing including all charges
+// Final billing
 void addBilling() {
     int roomNo;
-    printf("Enter room number for billing: ");
+    printf("\n========== Receptionist Billing ==========\n");
+    printf("Enter room number: ");
     scanf("%d", &roomNo);
 
     for (int i = 0; i < roomCount; i++) {
         if (rooms[i].roomNo == roomNo) {
             if (rooms[i].isAvailable) {
-                printf("Room %d is currently not booked.\n", roomNo);
+                printf("⚠️  Room not booked.\n");
                 return;
             }
 
-            int roomRate = 0;
-            if (strcmp(rooms[i].type, "Single") == 0) roomRate = 1000;
-            else if (strcmp(rooms[i].type, "Double") == 0) roomRate = 1500;
-            else roomRate = 2500;
+            int rate = 0;
+            if (strcmp(rooms[i].type, "Single") == 0) rate = 1000;
+            else if (strcmp(rooms[i].type, "Double") == 0) rate = 1500;
+            else rate = 2500;
 
-            int stayCost = roomRate * rooms[i].daysStayed;
+            int stayCost = rate * rooms[i].daysStayed;
             int total = stayCost + rooms[i].serviceCharges + rooms[i].cleaningCharges + rooms[i].foodCharges;
 
-            printf("\n--- Billing Details for Room %d ---\n", roomNo);
-            printf("Guest Name: %s\n", rooms[i].guestName);
-            printf("Stay Charges (%d days @ Rs.%d per day): Rs.%d\n", rooms[i].daysStayed, roomRate, stayCost);
+            printf("\n--- Bill for Room %d ---\n", roomNo);
+            printf("Guest: %s\n", rooms[i].guestName);
+            printf("Stay (%d days x Rs.%d): Rs.%d\n", rooms[i].daysStayed, rate, stayCost);
             printf("Service Charges: Rs.%d\n", rooms[i].serviceCharges);
             printf("Cleaning Charges: Rs.%d\n", rooms[i].cleaningCharges);
             printf("Food Charges: Rs.%d\n", rooms[i].foodCharges);
-            printf("Total Bill Amount: Rs.%d\n\n", total);
-
+            printf("👉 Total Amount: Rs.%d\n", total);
             return;
         }
     }
-    printf("Invalid room number.\n");
+    printf("❌ Invalid room number.\n");
 }
 
-// Display room details
+// Display all rooms
 void displayRooms() {
-    printf("\nRoom No\tType\tAvailability\tGuest Name\n");
+    printf("\n========== Room Status ==========\n");
+    printf("Room\tType\tStatus\t\tGuest\n");
     for (int i = 0; i < roomCount; i++) {
         printf("%d\t%s\t%s\t%s\n", rooms[i].roomNo, rooms[i].type,
                rooms[i].isAvailable ? "Available" : "Booked",
@@ -260,51 +258,29 @@ void displayRooms() {
     }
 }
 
+// Main menu
 int main() {
     int choice;
     initRooms();
 
     do {
-        printf("\n--- Hotel Management System ---\n");
-        printf("1. Book Room\n");
-        printf("2. Check Out\n");
-        printf("3. Kitchen Department\n");
-        printf("4. Service Department\n");
-        printf("5. Cleaning Department\n");
-        printf("6. Receptionist Department (Billing)\n");
-        printf("7. Display Rooms\n");
-        printf("8. Exit\n");
+        printf("\n========== Welcome to Roshan's Hotel ==========\n");
+        printf("1. Book Room\n2. Check Out\n3. Kitchen Dept\n4. Service Dept\n5. Cleaning Dept\n6. Billing\n7. Show Rooms\n8. Exit\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
 
         switch (choice) {
-            case 1:
-                bookRoom();
-                break;
-            case 2:
-                checkOut();
-                break;
-            case 3:
-                kitchenMenu();
-                break;
-            case 4:
-                serviceMenu();
-                break;
-            case 5:
-                cleanerMenu();
-                break;
-            case 6:
-                addBilling();
-                break;
-            case 7:
-                displayRooms();
-                break;
-            case 8:
-                printf("Exiting system. Goodbye!\n");
-                break;
-            default:
-                printf("Invalid choice. Please try again.\n");
+            case 1: bookRoom(); break;
+            case 2: checkOut(); break;
+            case 3: kitchenMenu(); break;
+            case 4: serviceMenu(); break;
+            case 5: cleanerMenu(); break;
+            case 6: addBilling(); break;
+            case 7: displayRooms(); break;
+            case 8: printf("\n🙏 Thank you for using Roshan's Hotel Management System. Goodbye!\n"); break;
+            default: printf("❌ Invalid choice. Try again.\n");
         }
     } while (choice != 8);
 
     return 0;
+}
